@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  shelf-api:
+    build: .
+    container_name: smart-shelf-api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount models folder dynamically so we don't have to rebuild images when weights update
+      - ./models:/app/models
+      # Mount data folder to supply images if needed
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
