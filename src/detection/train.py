@@ -1,5 +1,6 @@
 import os
 import logging
+import mlflow
 from ultralytics import YOLO
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -18,7 +19,13 @@ def train_yolo_model(data_yaml_path: str, epochs: int = 50, imgsz: int = 640, ba
     # Load pre-trained model for transfer learning
     model = YOLO("yolov8s.pt")
     
+    # Initialize MLflow experiment
+    mlflow.set_tracking_uri("sqlite:///mlruns.db")
+    mlflow.set_experiment("Shelf_Object_Detection")
+    
     logger.info(f"Starting training for {epochs} epochs with image size {imgsz}...")
+    
+    # Ultralytics natively logs to active MLflow runs if mlflow is installed
     results = model.train(
         data=data_yaml_path,
         epochs=epochs,

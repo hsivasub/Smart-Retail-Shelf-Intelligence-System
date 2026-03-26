@@ -29,12 +29,23 @@ class ShelfAnomalyDetector:
         Train the Isolation Forest on historical bounding box features to learn the 'normal' layout.
         """
         logger.info(f"Training Isolation Forest on {features.shape[0]} historical detections...")
-        self.model.fit(features)
-        self.is_trained = True
         
-        os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
-        joblib.dump(self.model, model_save_path)
-        logger.info(f"Model saved to {model_save_path}")
+        import mlflow
+        mlflow.set_tracking_uri("sqlite:///mlruns.db")
+        mlflow.set_experiment("Shelf_Anomaly_Detection")
+        
+        with mlflow.start_run(run_name="IsolationForest_Training"):
+            mlflow.log_param("contamination", self.contamination)
+            mlflow.log_param("n_samples", features.shape[0])
+            
+            self.model.fit(features)
+            self.is_trained = True
+            
+            os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
+            joblib.dump(self.model, model_save_path)
+            
+            mlflow.sklearn.log_model(self.model, "iso_forest_model")
+            logger.info(f"Model saved to {model_save_path} and logged to MLflow")
 
     def detect_misplaced_items(self, features: np.ndarray) -> np.ndarray:
         """
