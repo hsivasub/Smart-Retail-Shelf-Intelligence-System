@@ -38,6 +38,4 @@ data/
 models/
 !models/.gitkeep
 mlruns/
-airflow/
-!airflow/.gitkeep
 *.db
