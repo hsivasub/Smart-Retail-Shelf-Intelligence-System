@@ -58,3 +58,21 @@ t4_train_anomaly = BashOperator(
 
 # Set execution flow constraints
 t1_ingestion >> t2_preprocessing >> t3_train_yolo >> t4_train_anomaly
+
+# DAG for Batch Inference
+inference_dag = DAG(
+    'smart_shelf_batch_inference_pipeline',
+    default_args=default_args,
+    description='Airflow DAG for running batch inference on new shelf images.',
+    schedule_interval=timedelta(hours=4), # Run every 4 hours
+    start_date=datetime(2026, 3, 27),
+    catchup=False,
+    tags=['retail_shelf', 'mlops', 'inference'],
+)
+
+# Task: Batch Inference
+t1_batch_inference = BashOperator(
+    task_id='run_batch_inference',
+    bash_command='python src/detection/inference.py --batch',
+    dag=inference_dag,
+)
