@@ -14,7 +14,22 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from detection.inference import ShelfDetector
 from anomaly.model import ShelfAnomalyDetector
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+from logging.handlers import TimedRotatingFileHandler
+
+# Define log formatting and directory
+os.makedirs("logs", exist_ok=True)
+log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# Set up Rotating file handler (daily rotation, keeps 7 days)
+file_handler = TimedRotatingFileHandler("logs/api_production.log", when="d", interval=1, backupCount=7)
+file_handler.setFormatter(log_formatter)
+
+# Set up Console handler
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(log_formatter)
+
+# Configure Root Logger
+logging.basicConfig(level=logging.INFO, handlers=[file_handler, console_handler])
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Smart Retail Shelf Intelligence API", version="1.0.0")
