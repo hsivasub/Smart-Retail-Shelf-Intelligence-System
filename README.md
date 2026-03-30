@@ -100,4 +100,4 @@ Analyzes a shelf image and returns detections, health scores, and operational me
 ```
 
 ---
-*Built incrementally over a 14-day Engineering Plan covering end-to-end Deep Learning, Fast Inference, and strict MLOps standards.*
+
