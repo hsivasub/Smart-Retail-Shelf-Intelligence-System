@@ -39,3 +39,6 @@ models/
 !models/.gitkeep
 mlruns/
 *.db
+
+# Local notes (do not push)
+Projectexplanation.txt

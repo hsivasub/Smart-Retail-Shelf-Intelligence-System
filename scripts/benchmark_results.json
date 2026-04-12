@@ -1,0 +1,44 @@
+{
+  "yolo_latency": {
+    "model": "YOLOv8n (pretrained)",
+    "device": "CPU",
+    "num_frames": 50,
+    "image_size": "640x640",
+    "mean_ms": 49.95,
+    "p50_ms": 50.02,
+    "p95_ms": 51.76,
+    "p99_ms": 51.99,
+    "fps": 20.02
+  },
+  "anomaly_detection": {
+    "model": "Isolation Forest",
+    "n_train": 1540,
+    "n_test": 660,
+    "contamination_ratio": 0.0909,
+    "train_time_s": 0.1409,
+    "inference_ms_per_batch": 7.03,
+    "precision": 0.9677,
+    "recall": 1.0,
+    "f1_score": 0.9836,
+    "auc_roc": 1.0,
+    "auc_pr": 1.0,
+    "false_alarm_rate": 0.0033,
+    "true_positives": 60,
+    "false_negatives": 0
+  },
+  "health_score": {
+    "n_shelves_simulated": 500,
+    "mean_score": 88.12,
+    "std_score": 6.08,
+    "min_score": 75.29,
+    "max_score": 100.0,
+    "pct_healthy_above_80": 90.8,
+    "pct_critical_below_50": 0.0
+  },
+  "e2e_pipeline": {
+    "n_frames": 30,
+    "mean_ms": 60.28,
+    "p95_ms": 75.48,
+    "throughput_fps": 16.59
+  }
+}
