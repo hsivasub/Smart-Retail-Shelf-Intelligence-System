@@ -50,31 +50,49 @@ class BoundingBox(BaseModel):
     height: float
     class_name: str
     confidence: float
+    is_anomaly: bool = False
+    semantic_score: float = 1.0
 
 class InferenceResponse(BaseModel):
     shelf_health_score: float
     total_products_detected: int
     empty_slots_detected: int
     misplaced_items_detected: int
+    semantic_mismatches_detected: int = 0
     detections: List[BoundingBox]
+
+from classification.embedding import SKUEmbedder
+from classification.store import ReferenceVectorStore
+from anomaly.semantic import SemanticVerifier
 
 # --- Model Loading (Paths for Day 8 integration) ---
 MODEL_WEIGHTS = "models/shelf_detection/weights/best.pt"
 ANOMALY_WEIGHTS = "models/anomaly/iso_forest.joblib"
+REFERENCE_VECTORS = "models/classification/reference_vectors.npz"
 
 detector = None
 anomaly_detector = None
+sku_embedder = None
+semantic_verifier = None
+reference_store = None
 
 @app.on_event("startup")
 def load_models():
     """Loads weights dynamically on server start."""
-    global detector, anomaly_detector
+    global detector, anomaly_detector, sku_embedder, semantic_verifier, reference_store
     try:
         if os.path.exists(MODEL_WEIGHTS):
             detector = ShelfDetector(MODEL_WEIGHTS)
+        
         if os.path.exists(ANOMALY_WEIGHTS):
             anomaly_detector = ShelfAnomalyDetector(model_path=ANOMALY_WEIGHTS)
-        logger.info("Models loaded successfully (if weights were present).")
+        
+        # Initialize semantic layer
+        sku_embedder = SKUEmbedder(device="cpu")
+        semantic_verifier = SemanticVerifier(threshold=0.85)
+        reference_store = ReferenceVectorStore(storage_path=REFERENCE_VECTORS)
+        
+        logger.info("Models and Reference Store loaded successfully.")
     except Exception as e:
         logger.error(f"Error loading models: {e}")
 
@@ -102,18 +120,33 @@ async def analyze_shelf(file: UploadFile = File(...)):
     # In a full pipeline, we'd execute detector.predict_image() here.
     # We return mock responses if weights aren't present yet, indicating the expected contract.
     
+    # Mock logic for demonstration of the hybrid layer
     detected_products = 50
     empty_slots = 5
-    detections: List[BoundingBox] = []
     misplaced = 2
-    health_score = 92.5
+    semantic_mismatches = 1
+    health_score = 88.0
     
-    if detector and anomaly_detector:
-        # Pseudo-code for actual model calls:
-        # preds, _ = detector.predict_image(img)
-        # formatted_preds = format_yolo_to_bbox(preds)
-        # anomalies = anomaly_detector.detect_misplaced_items(features)
-        # health_score = anomaly_detector.shelf_health_score(...)
+    detections: List[BoundingBox] = [
+        BoundingBox(
+            x_center=0.5, y_center=0.5, width=0.1, height=0.2, 
+            class_name="Coke_Bottle", confidence=0.98, 
+            is_anomaly=False, semantic_score=0.95
+        ),
+        BoundingBox(
+            x_center=0.6, y_center=0.5, width=0.1, height=0.2, 
+            class_name="Coke_Bottle", confidence=0.95, 
+            is_anomaly=True, semantic_score=0.42 # Swapped with Pepsi!
+        )
+    ]
+    
+    if detector and anomaly_detector and sku_embedder:
+        # Full hybrid pipeline:
+        # 1. YOLO Detection
+        # 2. Extract crops for each detection
+        # 3. Isolation Forest for spatial anomaly check
+        # 4. SKUEmbedder for semantic feature extraction
+        # 5. SemanticVerifier comparing against reference embeddings
         pass
         
     return InferenceResponse(
@@ -121,6 +154,7 @@ async def analyze_shelf(file: UploadFile = File(...)):
         total_products_detected=detected_products,
         empty_slots_detected=empty_slots,
         misplaced_items_detected=misplaced,
+        semantic_mismatches_detected=semantic_mismatches,
         detections=detections
     )
 
